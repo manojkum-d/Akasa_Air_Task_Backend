@@ -1,8 +1,8 @@
-import { Document } from "mongoose";
+import { Document, Types } from "mongoose";
 
 export interface IItem extends Document {
   name: string;
-  category: string; // Or Types.ObjectId if using a Category model
+  category: Types.ObjectId; // Reference to Category
   price: number;
   stockQuantity: number;
   description?: string;
