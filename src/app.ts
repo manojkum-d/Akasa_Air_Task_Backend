@@ -7,6 +7,7 @@ import { errorHandler } from "./middlewares/errorHandler.js";
 import googleAuthRoutes from "./modules/auth/routes/googleAuthRoutes.js";
 import itemRoutes from "./modules/item/routes/itemRoutes.js";
 import categoryRoutes from "./modules/item/routes/categoryRoutes.js";
+import cartRoutes from "./modules/cart/routes/cartRoutes.js";
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/auth", googleAuthRoutes);
 app.use("/api/items", itemRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/cart", cartRoutes);
 
 // Global Error Handler
 app.use(errorHandler);
