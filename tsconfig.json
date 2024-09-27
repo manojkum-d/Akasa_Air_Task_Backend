@@ -1,20 +1,23 @@
-// tsconfig.json
 {
   "compilerOptions": {
-    "target": "ES6", // Target ES6 or higher for import/export support
-    "module": "ESNext", // Use ESNext for ES modules
-    "moduleResolution": "node", // Use Node.js module resolution
-    "esModuleInterop": true, // Enable interop between CommonJS and ES modules
-    "forceConsistentCasingInFileNames": true,
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "./dist",
+    "rootDir": "./src",
     "strict": true,
+    "esModuleInterop": true,
     "skipLibCheck": true,
-    "outDir": "./dist", // Output directory for compiled files
-    "resolveJsonModule": true, // Allow importing JSON files
-    "baseUrl": "./", // Base directory for module resolution
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "baseUrl": "./",
     "paths": {
-      "*": ["node_modules/*"]
+      "*": ["node_modules/*", "src/types/*"]
     }
   },
-  "include": ["src/**/*"], // Include all TypeScript files in the src directory
-  "exclude": ["node_modules", "dist"] // Exclude node_modules and dist directories
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
 }

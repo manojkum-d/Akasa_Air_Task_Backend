@@ -1,5 +1,6 @@
 import { Schema, model } from "mongoose";
-import { IOrder, ICartItem } from "../../../interfaces";
+import { IOrder } from "../../../interfaces/IOrder.js";
+import { ICartItem } from "../../../interfaces/ICartItem.js";
 
 const OrderItemSchema = new Schema<ICartItem>({
   item: { type: Schema.Types.ObjectId, ref: "Item", required: true },
