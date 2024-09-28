@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { Types } from "mongoose";
-import * as cartService from "../services/cartServices.js";
+import * as cartService from "../services/cartService.js";
 
 /**
  * Get the cart for the logged-in user.

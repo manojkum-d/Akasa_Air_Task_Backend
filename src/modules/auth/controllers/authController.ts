@@ -7,12 +7,19 @@ import {
 } from "../services/authService.js";
 import { AuthRequest } from "../../../interfaces/IauthRequest.js";
 import { IUser } from "../../../interfaces/IUser.js";
+import { redisClient } from "../../../config/redis.js"; // Redis client
 
 // Generate a JWT token
 const generateToken = (userId: string) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET as string, {
-    expiresIn: "1h", // Token expires in 1 hour
+    expiresIn: "15d", // Token expires in 15 days
   });
+};
+
+// Store token in Redis with a TTL
+const storeTokenInRedis = async (userId: string, token: string) => {
+  const redisKey = `session:${userId}`;
+  await redisClient.set(redisKey, token, { EX: 15 * 24 * 60 * 60 }); // Token expires in 15 days
 };
 
 // Register a new user and return a JWT token
@@ -23,16 +30,15 @@ export const register = async (
 ): Promise<void> => {
   const { email, password, name } = req.body;
   try {
-    // Register the user
     const user = await registerUser(email, password, name);
 
-    // Generate an access token
     const token = generateToken(user.id);
+    await storeTokenInRedis(user.id, token);
 
     res.status(201).json({
       message: "User registered successfully",
       userId: user._id,
-      token, // Return the token in the response
+      token,
     });
   } catch (error) {
     next(error);
@@ -47,8 +53,10 @@ export const login = async (
 ): Promise<void> => {
   const { email, password } = req.body;
   try {
-    // Authenticate the user
-    const { token } = await authenticateUser(email, password);
+    const { token, userId } = await authenticateUser(email, password);
+
+    await storeTokenInRedis(userId, token);
+
     res.json({ message: "Login successful", token });
   } catch (error) {
     next(error);
@@ -66,21 +74,24 @@ export const getProfile = async (
 
     if (!userId) {
       res.status(401).json({ error: "Unauthorized: User ID is missing" });
-      return; // Exit the function
+      return;
     }
 
-    // Get user details by userId
     const user = (await getUserById(userId)) as IUser;
 
     if (!user) {
       res.status(404).json({ error: "User not found" });
-      return; // Exit the function
+      return;
     }
 
-    // Generate a new token or return the existing token
-    const token = generateToken(userId);
+    // Retrieve the token from Redis
+    let token = await redisClient.get(`session:${userId}`);
 
-    // Send user profile with token
+    if (!token) {
+      token = generateToken(userId);
+      await storeTokenInRedis(userId, token);
+    }
+
     res.json({ email: user.email, name: user.name, token });
   } catch (error) {
     next(error);

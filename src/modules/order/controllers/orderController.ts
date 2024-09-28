@@ -1,110 +1,126 @@
-import { Request, Response, NextFunction } from "express";
-import { Types } from "mongoose";
+import { Response, NextFunction } from "express";
 import * as orderService from "../services/orderServices.js";
+import * as cartService from "../../cart/services/cartService.js";
+import { Types } from "mongoose";
+import { AuthRequest } from "../../../interfaces/IauthRequest.js"; // Assuming the correct path
 
-/**
- * Get order history for the logged-in user.
- */
-export const getOrderHistory = async (
-  req: Request,
+export const getUserOrders = async (
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = new Types.ObjectId(req.userId); // Convert userId to Types.ObjectId
-    const orders = await orderService.getOrderHistory(userId);
-    void res.json({ orders }); // Explicitly cast to void
+    const userId = new Types.ObjectId(req.userId); // User ID from authenticated user
+    const orders = await orderService.getOrdersByUserId(userId);
+    res.json(orders);
   } catch (error) {
-    next(error);
+    res.status(500).json({ message: "Error fetching user orders", error });
   }
 };
 
-/**
- * Checkout process: Create an order based on the user's cart.
- */
-export const checkout = async (
-  req: Request,
+export const getOrder = async (
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = new Types.ObjectId(req.userId); // Convert userId to Types.ObjectId
-    const order = await orderService.checkout(userId);
-    void res.status(201).json({ message: "Order placed successfully", order }); // Explicitly cast to void
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * Get an order by ID.
- */
-export const getOrderById = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const orderId = req.params.id; // Get order ID from the request params
+    const orderId = new Types.ObjectId(req.params.orderId);
     const order = await orderService.getOrderById(orderId);
-
     if (!order) {
-      return void res.status(404).json({ error: "Order not found" }); // Explicitly cast to void
+      res.status(404).json({ message: "Order not found" });
+      return;
     }
-
-    void res.json({ order }); // Explicitly cast to void
+    res.json(order);
   } catch (error) {
-    next(error);
+    res.status(500).json({ message: "Error fetching order", error });
   }
 };
 
-/**
- * Update an existing order by ID.
- */
-export const updateOrder = async (
-  req: Request,
+export const updateOrderStatus = async (
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const orderId = req.params.id; // Get order ID from the request params
-    const orderData = req.body; // Get order data from the request body
-    const updatedOrder = await orderService.updateOrder(orderId, orderData);
-
+    const orderId = new Types.ObjectId(req.params.orderId);
+    const { orderStatus } = req.body;
+    const updatedOrder = await orderService.updateOrderStatus(
+      orderId,
+      orderStatus
+    );
     if (!updatedOrder) {
-      return void res.status(404).json({ error: "Order not found" }); // Explicitly cast to void
+      res.status(404).json({ message: "Order not found" });
+      return;
     }
-
-    void res.json({
-      message: "Order updated successfully",
-      order: updatedOrder,
-    }); // Explicitly cast to void
+    res.json(updatedOrder);
   } catch (error) {
-    next(error);
+    res.status(500).json({ message: "Error updating order status", error });
   }
 };
 
-/**
- * Delete an order by ID.
- */
-export const deleteOrder = async (
-  req: Request,
+export const updatePaymentStatus = async (
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const orderId = req.params.id; // Get order ID from the request params
-    const deletedOrder = await orderService.deleteOrder(orderId);
+    const orderId = new Types.ObjectId(req.params.orderId);
+    const { paymentStatus } = req.body;
+    const updatedOrder = await orderService.updatePaymentStatus(
+      orderId,
+      paymentStatus
+    );
+    if (!updatedOrder) {
+      res.status(404).json({ message: "Order not found" });
+      return;
+    }
+    res.json(updatedOrder);
+  } catch (error) {
+    res.status(500).json({ message: "Error updating payment status", error });
+  }
+};
 
-    if (!deletedOrder) {
-      return void res.status(404).json({ error: "Order not found" }); // Explicitly cast to void
+export const getOrderByTracking = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { trackingId } = req.params;
+    const order = await orderService.getOrderByTrackingId(trackingId);
+    if (!order) {
+      res.status(404).json({ message: "Order not found" });
+      return;
+    }
+    res.json(order);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error fetching order by tracking ID", error });
+  }
+};
+
+export const checkout = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = new Types.ObjectId(req.userId); // User ID from authenticated user
+    const newOrder = await cartService.checkout(userId);
+
+    if (!newOrder) {
+      res
+        .status(400)
+        .json({ message: "Checkout failed. Cart might be empty." });
+      return;
     }
 
-    void res.json({
-      message: "Order deleted successfully",
-      order: deletedOrder,
-    }); // Explicitly cast to void
+    res.status(201).json({
+      message: "Your order has been placed successfully!",
+      order: newOrder,
+    });
   } catch (error) {
-    next(error);
+    res.status(500).json({ message: "Error during checkout", error });
   }
 };

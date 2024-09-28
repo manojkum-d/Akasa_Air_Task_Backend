@@ -1,23 +1,17 @@
 import Cart from "../models/cartModel.js";
 import Item from "../../item/models/itemModel.js";
-import Order from "../../order/models/orderModel.js"; // Import the Order model
+import Order from "../../order/models/orderModel.js";
 import { Types } from "mongoose";
 import { ICart } from "../../../interfaces/ICart.js";
-import { nanoid } from "nanoid"; // For generating unique tracking IDs
+import { nanoid } from "nanoid";
 import { IOrder } from "../../../interfaces/IOrder.js";
 
-/**
- * Get the cart for a specific user by userId.
- */
 export const getCartByUserId = async (
   userId: Types.ObjectId
 ): Promise<ICart | null> => {
   return Cart.findOne({ user: userId }).populate("items.item").exec();
 };
 
-/**
- * Add an item to the user's cart.
- */
 export const addItemToCart = async (
   userId: Types.ObjectId,
   itemId: Types.ObjectId,
@@ -62,9 +56,6 @@ export const addItemToCart = async (
   return cart.save();
 };
 
-/**
- * Remove an item from the user's cart.
- */
 export const removeItemFromCart = async (
   userId: Types.ObjectId,
   itemId: Types.ObjectId
@@ -81,16 +72,10 @@ export const removeItemFromCart = async (
   return null;
 };
 
-/**
- * Clear the user's cart.
- */
 export const clearCart = async (userId: Types.ObjectId): Promise<void> => {
   await Cart.findOneAndDelete({ user: userId });
 };
 
-/**
- * Validate stock before checkout.
- */
 export const validateStock = async (userId: Types.ObjectId): Promise<void> => {
   const cart = await getCartByUserId(userId);
 
@@ -113,46 +98,46 @@ export const validateStock = async (userId: Types.ObjectId): Promise<void> => {
   }
 };
 
-/**
- * Checkout process: Deduct stock, create an order, and clear the cart.
- */
 export const checkout = async (userId: Types.ObjectId): Promise<IOrder> => {
   const cart = await getCartByUserId(userId);
   if (!cart || cart.items.length === 0) throw new Error("Cart is empty");
 
-  await validateStock(userId); // Ensure the stock is available
+  await validateStock(userId);
 
   const orderItems = [];
-  let totalAmount = 0; // Initialize totalAmount to zero
+  let totalAmount = 0;
 
-  // Loop through cart items and calculate total amount while deducting stock
   for (const cartItem of cart.items) {
     const item = await Item.findById(cartItem.item);
     if (item) {
-      item.stockQuantity -= cartItem.quantity; // Deduct stock quantity
-      await item.save(); // Save updated stock
+      if (item.stockQuantity < cartItem.quantity) {
+        throw new Error(`Not enough stock for item: ${item.name}`);
+      }
+
+      item.stockQuantity -= cartItem.quantity;
+      await item.save();
 
       orderItems.push({ item: item._id, quantity: cartItem.quantity });
-      totalAmount += item.price * cartItem.quantity; // Calculate totalAmount
+      totalAmount += item.price * cartItem.quantity;
+    } else {
+      throw new Error(`Item with ID ${cartItem.item} not found`);
     }
   }
 
-  // Generate a unique tracking ID for the order
   const trackingId = nanoid(12);
 
-  // Create the order with items, totalAmount, and trackingId
   const newOrder = new Order({
     user: userId,
     items: orderItems,
     totalAmount,
-    trackingId, // Assign unique tracking ID
-    orderStatus: "Processing", // Set initial order status
-    paymentStatus: "Paid", // Assuming payment is successful
+    trackingId,
+    orderStatus: "Processing",
+    paymentStatus: "Paid",
   });
 
-  await newOrder.save(); // Save the order
+  await newOrder.save();
 
-  await clearCart(userId); // Clear the cart after successful checkout
+  await clearCart(userId);
 
-  return newOrder; // Return the newly created order
+  return newOrder;
 };

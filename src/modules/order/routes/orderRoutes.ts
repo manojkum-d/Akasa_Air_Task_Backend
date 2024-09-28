@@ -1,42 +1,61 @@
 import { Router } from "express";
 import * as orderController from "../controllers/orderController.js";
-import { authenticateToken } from "../../auth/middlewares/authMiddleware.js"; // Import the auth middleware
+import { authenticateToken } from "../../auth/middlewares/authMiddleware.js";
 
 const router = Router();
 
 /**
- * @route   GET /api/orders
- * @desc    Get order history for the user
+ * @route   GET /api/orders/user
+ * @desc    Get all orders for the authenticated user
  * @access  Private
  */
-router.get("/", authenticateToken, orderController.getOrderHistory);
+router.get("/user", authenticateToken, orderController.getUserOrders);
 
 /**
- * @route   POST /api/orders/checkout
- * @desc    Checkout and place an order
- * @access  Private
- */
-router.post("/checkout", authenticateToken, orderController.checkout);
-
-/**
- * @route   GET /api/orders/:id
+ * @route   GET /api/orders/:orderId
  * @desc    Get a specific order by ID
  * @access  Private
  */
-router.get("/:id", authenticateToken, orderController.getOrderById);
+router.get("/:orderId", authenticateToken, orderController.getOrder);
 
 /**
- * @route   PUT /api/orders/:id
- * @desc    Update an existing order by ID
+ * @route   PATCH /api/orders/:orderId/status
+ * @desc    Update the status of an order
  * @access  Private
  */
-router.put("/:id", authenticateToken, orderController.updateOrder);
+router.patch(
+  "/:orderId/status",
+  authenticateToken,
+  orderController.updateOrderStatus
+);
 
 /**
- * @route   DELETE /api/orders/:id
- * @desc    Delete an order by ID
+ * @route   PATCH /api/orders/:orderId/payment
+ * @desc    Update the payment status of an order
  * @access  Private
  */
-router.delete("/:id", authenticateToken, orderController.deleteOrder);
+router.patch(
+  "/:orderId/payment",
+  authenticateToken,
+  orderController.updatePaymentStatus
+);
+
+/**
+ * @route   GET /api/orders/tracking/:trackingId
+ * @desc    Get an order by its tracking ID
+ * @access  Private
+ */
+router.get(
+  "/tracking/:trackingId",
+  authenticateToken,
+  orderController.getOrderByTracking
+);
+
+/**
+ * @route   POST /api/orders/checkout
+ * @desc    Checkout the current cart and create a new order
+ * @access  Private
+ */
+router.post("/checkout", authenticateToken, orderController.checkout);
 
 export default router;
