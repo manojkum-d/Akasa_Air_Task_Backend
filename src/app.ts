@@ -9,6 +9,7 @@ import itemRoutes from "./modules/item/routes/itemRoutes.js";
 import categoryRoutes from "./modules/item/routes/categoryRoutes.js";
 import cartRoutes from "./modules/cart/routes/cartRoutes.js";
 import { connectRedis } from "./config/redis.js";
+import orderRoutes from "./modules/order/routes/orderRoutes.js";
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use("/api/auth", googleAuthRoutes);
 app.use("/api/items", itemRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/orders", orderRoutes);
 
 // Global Error Handler
 app.use(errorHandler);
