@@ -8,6 +8,7 @@ import googleAuthRoutes from "./modules/auth/routes/googleAuthRoutes.js";
 import itemRoutes from "./modules/item/routes/itemRoutes.js";
 import categoryRoutes from "./modules/item/routes/categoryRoutes.js";
 import cartRoutes from "./modules/cart/routes/cartRoutes.js";
+import { connectRedis } from "./config/redis.js";
 
 dotenv.config();
 
@@ -19,6 +20,9 @@ app.use(urlencoded({ extended: true }));
 
 // Connect to Database
 connectDatabase();
+
+// Connect to Redis Cloud
+connectRedis();
 
 // Routes
 app.use("/api/auth", authRoutes);
