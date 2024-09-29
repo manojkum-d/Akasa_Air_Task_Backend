@@ -10,12 +10,14 @@ import categoryRoutes from "./modules/item/routes/categoryRoutes.js";
 import cartRoutes from "./modules/cart/routes/cartRoutes.js";
 import { connectRedis } from "./config/redis.js";
 import orderRoutes from "./modules/order/routes/orderRoutes.js";
+import cors from "cors";
 
 dotenv.config();
 
 const app = express();
 
 // Middleware
+app.use(cors()); // Enable CORS for any origin
 app.use(json());
 app.use(urlencoded({ extended: true }));
 
